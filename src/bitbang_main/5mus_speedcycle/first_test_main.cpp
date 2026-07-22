@@ -21,12 +21,13 @@ pinMode(CSN_2, OUTPUT);
 }
     
 void loop() {
-  /*
+  
   digitalWrite(PC13, LOW);  // ON
   delay(250);
   digitalWrite(PC13, HIGH); // OFF
   delay(250);
 
+  /*
   digitalWrite(CE_1, HIGH);
   delayMicroseconds(15); 
   digitalWrite(CE_1, LOW);
