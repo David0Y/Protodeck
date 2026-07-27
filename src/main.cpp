@@ -1,79 +1,100 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-/*GND Purple 1
-VCC Brown 2
-CE Red 3 (CE_2, PA3)
-CSN Black 4 (CSN_2, PA4) black 4
-SCK Brown 5 (PA5)
-MOSI White 6 (PA7)
-MISO Black 7 (PA6)
-IRQ Black 8 (not actively tested here) */
+/* 
+  Shared SPI Pins (Bus 1):
+  SCK:  PA5 | MISO: PA6 | MOSI: PA7
 
+  Module I:  CSN: PB0 | CE: PB10
+  Module II: CSN: PA4 | CE: PA3
+*/
 
+#define CSN_1 PB0
+#define CE_1  PB10
+#define CSN_2 PA4
+#define CE_2  PA3
 
+#define R_REGISTER  0x00
+#define CONFIG_REG  0x00
 
-// Define your GPIO pins based on your board layout
-#define CSN_2 PA4   // Chip Select Not (Slam LOW to talk to nRF)
-#define CE_2 PA3  // Chip Enable (Leave LOW for now, not needed for SPI check)
+// Test frequencies to sweep through (in Hz)
+const uint32_t testFrequencies[] = {
+  1000000UL,  // 1 MHz  (Safe Baseline)
+  2000000UL,  // 2 MHz
+  4000000UL,  // 4 MHz
+  8000000UL,  // 8 MHz  (Near nRF24 Spec Limit)
+  10000000UL, // 10 MHz (Official nRF24 Max Spec)
+  12000000UL  // 12 MHz (Overclock Attempt)
+};
 
-// nRF24L01+ Instruction Mnemonics
-#define R_REGISTER    0x00  // Command to read a register
-#define CONFIG_REG    0x00  // Address of the CONFIG register
+const uint8_t numFreqs = sizeof(testFrequencies) / sizeof(testFrequencies[0]);
+
+// Tests a single module at a given SPI clock speed
+bool testModuleAtSpeed(uint8_t csnPin, uint32_t speedHz) {
+  SPI.beginTransaction(SPISettings(speedHz, MSBFIRST, SPI_MODE0));
+  
+  digitalWrite(csnPin, LOW);
+  uint8_t status = SPI.transfer(R_REGISTER | CONFIG_REG);
+  uint8_t configVal = SPI.transfer(0x00);
+  digitalWrite(csnPin, HIGH);
+  
+  SPI.endTransaction();
+
+  // Return true ONLY if valid config (0x08) and status (0x0E) are read
+  return (configVal == 0x08 && (status & 0x0F) == 0x0E);
+}
 
 void setup() {
-    Serial.begin(115200);
-    while (!Serial) { delay(10); } // Wait for serial monitor to open
+  Serial.begin(115200);
+  while (!Serial) { delay(10); }
 
+  SPI.begin();
 
-     // Initialize the hardware SPI bus
-    SPI.begin();
+  pinMode(CSN_1, OUTPUT);
+  pinMode(CE_1, OUTPUT);
+  pinMode(CSN_2, OUTPUT);
+  pinMode(CE_2, OUTPUT);
 
-    pinMode(CSN_2, OUTPUT);
-    pinMode(CE_2, OUTPUT);
-    
-    // De-select the nRF chip initially (CSN is Active-LOW)
-    digitalWrite(CSN_2, HIGH); 
-    digitalWrite(CE_2, LOW);
+  digitalWrite(CSN_1, HIGH);
+  digitalWrite(CE_1, LOW);
+  digitalWrite(CSN_2, HIGH);
+  digitalWrite(CE_2, LOW);
 
-   
-    Serial.println("--- nRF24L01+ SPI Sanity Check ---");
+  Serial.println("\n==================================================");
+  Serial.println("     nRF24L01+ SPI Clock Speed Benchmark          ");
+  Serial.println("==================================================");
 }
 
 void loop() {
-    // 1. Start SPI transaction: 1 MHz clock, MSBFIRST, SPI_MODE0
-    SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
+  Serial.println("\n--- Starting Speed Sweep ---");
+
+  for (uint8_t i = 0; i < numFreqs; i++) {
+    uint32_t targetSpeed = testFrequencies[i];
     
-    // 2. Pull CSN LOW to select the nRF24L01+
-    digitalWrite(CSN_2, LOW);
+    Serial.print("Testing @ ");
+    Serial.print(targetSpeed / 1000000UL);
+    Serial.print(" MHz -> ");
 
-    // 3. Send the Read Command for the CONFIG register
-    // The nRF always shifts out its STATUS register byte on the very first transfer
-    uint8_t status = SPI.transfer(R_REGISTER | CONFIG_REG);
+    // Run 50 rapid transactions to catch intermittent clock jitter/bit slips
+    bool mod1Pass = true;
+    bool mod2Pass = true;
 
-    // 4. Send a dummy byte (0x00) to clock out the actual contents of the CONFIG register
-    uint8_t configVal = SPI.transfer(0x00);
-
-    // 5. Pull CSN HIGH to complete the transaction
-    digitalWrite(CSN_2, HIGH);
-    SPI.endTransaction();
-
-    // 6. Print the results
-    Serial.print("Status Register (Hex): 0x");
-    Serial.println(status, HEX);
-    
-    Serial.print("Config Register (Hex): 0x");
-    Serial.print(configVal, HEX);
-    
-    // Check against factory default expected value
-    if (configVal == 0x08) {
-        Serial.println(" -> SUCCESS! (Expected 0x08)");
-    } else if (configVal == 0x00 || configVal == 0xFF) {
-        Serial.println(" -> ERROR: Bus dead or floating. Check wiring/power.");
-    } else {
-        Serial.println(" -> UNEXPECTED VALUE: Communication partial or corrupted.");
+    for (int run = 0; run < 50; run++) {
+      if (!testModuleAtSpeed(CSN_1, targetSpeed)) mod1Pass = false;
+      if (!testModuleAtSpeed(CSN_2, targetSpeed)) mod2Pass = false;
     }
 
-    Serial.println("---------------------------------------");
-    delay(2000); // Repeat check every 2 seconds
+    // Report results
+    Serial.print("Mod I (PB0): ");
+    Serial.print(mod1Pass ? "[PASS] " : "[FAIL] ");
+
+    Serial.print("| Mod II (PA4): ");
+    Serial.println(mod2Pass ? "[PASS]" : "[FAIL]");
+
+    delay(100); // Short settle time between frequencies
+  }
+
+  Serial.println("--------------------------------------------------");
+  Serial.println("Sweep complete. Restarting in 5 seconds...");
+  delay(5000);
 }
