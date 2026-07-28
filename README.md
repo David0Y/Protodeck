@@ -4,5 +4,7 @@ It serves as a prototype for another upcoming prototype which will partially use
 
 This whole project and repo is a massive W.I.P.  
 this readme and the main branch will go through massive changes over several commits  
-For now, nearly the entire focus is on the bitbanging branch
 
+UPDATE: nrf and spi both work flawlessly, nrf transceivers reach the maximum frequency of around 10,5 MHz without any issues, even overclocking is possible  
+next up the hardware_verificication document will be updated and the github repo in general will be cleaned up majorly  
+fritzing diagram/ schematic and a hardware bringup document still need to be uploaded
