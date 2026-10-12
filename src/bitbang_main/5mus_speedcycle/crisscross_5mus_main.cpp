@@ -2,8 +2,8 @@
 #include "cmsis_pin_config.h"
 #include "sysclk.h"
 
-# define NOP_value 3  //3 is the value thats the closest to 0.5mus
-//# define NOP_value 40   //40 is the value that is closest to 5 mus
+//# define NOP_value 3  //3 is the value thats the closest to 0.5mus
+# define NOP_value 40   //40 is the value that is closest to 5 mus
 //this cpp file is for crisscross bitbanging in following sequence for each female header pin bulk:
 // CE (I and II), MOSI (I and II), MISO (I and II)
 //unlike the first test main file a bare metal approach is used here for maximum speed efficiency, so the pins drive high and low as closely together as possible
