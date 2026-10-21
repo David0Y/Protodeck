@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"name": "stm32_led",
+			"path": "../../../../../stm32_dump/stm32_led/stm32_led"
+		},
+		{
+			"name": "spi_bitbanging_stm32_blackpill",
+			"path": "../spi_bitbanging_stm32_blackpill"
+		},
+		{
+			"name": "spi_peripheraltesting",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"chrono": "c",
+			"variant": "c"
+		}
+	}
+}
