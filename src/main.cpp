@@ -3,87 +3,45 @@
 
 /* 
   Shared SPI Pins (Bus 1):
-  SCK:  PA5
-  MISO: PA6
-  MOSI: PA7
+  SCK:  PA5 | MISO: PA6 | MOSI: PA7
 
-  Module I:
-  CSN_1: PB0
-  CE_1:  PB10
-
-  Module II:
-  CSN_2: PA4
-  CE_2:  PA3
+  Module I:  CSN: PB0 | CE: PB10
+  Module II: CSN: PA4 | CE: PA3
 */
 
-// --- Pin Definitions ---
-// Module I
 #define CSN_1 PB0
 #define CE_1  PB10
-
-// Module II
 #define CSN_2 PA4
 #define CE_2  PA3
 
-// nRF24L01+ Register Commands
-#define R_REGISTER  0x00  // Command to read a register
-#define CONFIG_REG  0x00  // Address of the CONFIG register
+#define R_REGISTER  0x00
+#define CONFIG_REG  0x00
 
-// Struct to hold sanity check test results
-struct NRF_Status {
-  uint8_t statusVal;
-  uint8_t configVal;
+// Test frequencies to sweep through (in Hz)
+const uint32_t testFrequencies[] = {
+  1000000UL,  // 1 MHz  (Safe Baseline)
+  2000000UL,  // 2 MHz
+  4000000UL,  // 4 MHz
+  8000000UL,  // 8 MHz  (Near nRF24 Spec Limit)
+  10000000UL, // 10 MHz (Official nRF24 Max Spec)
+  12000000UL  // 12 MHz (Overclock Attempt)
 };
 
-// Helper function to query a specific nRF module by its CSN pin
-NRF_Status checkNRF(uint8_t csnPin) {
-  NRF_Status result;
+const uint8_t numFreqs = sizeof(testFrequencies) / sizeof(testFrequencies[0]);
 
-  // 1. Start SPI transaction (1 MHz, MSBFIRST, SPI_MODE0)
-  SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
+// Tests a single module at a given SPI clock speed
+bool testModuleAtSpeed(uint8_t csnPin, uint32_t speedHz) {
+  SPI.beginTransaction(SPISettings(speedHz, MSBFIRST, SPI_MODE0));
   
-  // 2. Pull CSN LOW to select the target module
   digitalWrite(csnPin, LOW);
-
-  // 3. Send Read Command; receives STATUS byte on first transfer
-  result.statusVal = SPI.transfer(R_REGISTER | CONFIG_REG);
-
-  // 4. Send dummy byte to clock out the CONFIG register value
-  result.configVal = SPI.transfer(0x00);
-
-  // 5. Pull CSN HIGH to release the SPI bus
+  uint8_t status = SPI.transfer(R_REGISTER | CONFIG_REG);
+  uint8_t configVal = SPI.transfer(0x00);
   digitalWrite(csnPin, HIGH);
+  
   SPI.endTransaction();
 
-  return result;
-}
-
-// Helper function to print evaluation for a module with explicit naming
-void printResults(const char* moduleName, NRF_Status res) {
-  Serial.print("[");
-  Serial.print(moduleName);
-  Serial.print("] Status: 0x");
-  if (res.statusVal < 0x10) Serial.print("0"); // Leading zero padding
-  Serial.print(res.statusVal, HEX);
-
-  Serial.print(" | Config: 0x");
-  if (res.configVal < 0x10) Serial.print("0");
-  Serial.print(res.configVal, HEX);
-
-  // Evaluate result with the module name explicitly highlighted in the success/error string
-  if (res.configVal == 0x08) {
-    Serial.print(" -> SUCCESS: ");
-    Serial.print(moduleName);
-    Serial.println(" responded correctly (Config = 0x08)!");
-  } else if (res.configVal == 0x00 || res.configVal == 0xFF) {
-    Serial.print(" -> ERROR: ");
-    Serial.print(moduleName);
-    Serial.println(" is DEAD or FLOATING. Check power/CSN wiring!");
-  } else {
-    Serial.print(" -> UNEXPECTED: ");
-    Serial.print(moduleName);
-    Serial.println(" responded, but CONFIG value is corrupted.");
-  }
+  // Return true ONLY if valid config (0x08) and status (0x0E) are read
+  return (configVal == 0x08 && (status & 0x0F) == 0x0E);
 }
 
 void setup() {
@@ -98,27 +56,47 @@ void setup() {
   pinMode(CE_1, OUTPUT);
   pinMode(CSN_2, OUTPUT);
   pinMode(CE_2, OUTPUT);
-  
-  // CRITICAL: Pull BOTH CSN pins HIGH immediately!
-  // If either boots LOW, it will corrupt SPI reads for the other module.
-  digitalWrite(CSN_1, HIGH); 
+
+  digitalWrite(CSN_1, HIGH);
   digitalWrite(CE_1, LOW);
-  
-  digitalWrite(CSN_2, HIGH); 
+  digitalWrite(CSN_2, HIGH);
   digitalWrite(CE_2, LOW);
 
-  Serial.println("--- Dual nRF24L01+ SPI Sanity Check ---");
+  Serial.println("\n==================================================");
+  Serial.println("     nRF24L01+ SPI Clock Speed Benchmark          ");
+  Serial.println("==================================================");
 }
 
 void loop() {
-  // Test Module I (PB0 / PB10)
-  NRF_Status mod1 = checkNRF(CSN_1);
-  printResults("Module I (PB0)", mod1);
+  Serial.println("\n--- Starting Speed Sweep ---");
 
-  // Test Module II (PA4 / PA3)
-  NRF_Status mod2 = checkNRF(CSN_2);
-  printResults("Module II (PA4)", mod2);
+  for (uint8_t i = 0; i < numFreqs; i++) {
+    uint32_t targetSpeed = testFrequencies[i];
+    
+    Serial.print("Testing @ ");
+    Serial.print(targetSpeed / 1000000UL);
+    Serial.print(" MHz -> ");
 
-  Serial.println("------------------------------------------------------------------");
-  delay(2000); // Check every 2 seconds
+    // Run 50 rapid transactions to catch intermittent clock jitter/bit slips
+    bool mod1Pass = true;
+    bool mod2Pass = true;
+
+    for (int run = 0; run < 50; run++) {
+      if (!testModuleAtSpeed(CSN_1, targetSpeed)) mod1Pass = false;
+      if (!testModuleAtSpeed(CSN_2, targetSpeed)) mod2Pass = false;
+    }
+
+    // Report results
+    Serial.print("Mod I (PB0): ");
+    Serial.print(mod1Pass ? "[PASS] " : "[FAIL] ");
+
+    Serial.print("| Mod II (PA4): ");
+    Serial.println(mod2Pass ? "[PASS]" : "[FAIL]");
+
+    delay(100); // Short settle time between frequencies
+  }
+
+  Serial.println("--------------------------------------------------");
+  Serial.println("Sweep complete. Restarting in 5 seconds...");
+  delay(5000);
 }
