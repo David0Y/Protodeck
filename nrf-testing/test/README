@@ -1,11 +1,13 @@
+To Dos:
+1. Group the static setter and getter functions into custom specific functions in one (or several) headers for more readibility DONE
+2. Comment everything out for both the main and header file 
+3. Make use of the nrf transceivers capability of sending 3 packets back to back instead of only sending out one package at a time (FIFO)
+4. Verify the package integrity by printing out the received data against the sent out data
+5. Check in more detail for spi corruption faults (silent bit flips)
+6. register 0x08 has a prebuilt hardware counter for lost packets and retransmissions, use it
+7. change the overclock speed printouts from the overclocked speeds to "Overclock speed attempt 1 (X MHz), Overclock speed attempt 2 (X Mhz) etc. , the way its printed out right now isnt fully correct
+8. Add a status LED function showing wether a package batch was sent and received succesfully or not, etc.
 
-This directory is intended for PlatformIO Test Runner and project tests.
-
-Unit Testing is a software testing method by which individual units of
-source code, sets of one or more MCU program modules together with associated
-control data, usage procedures, and operating procedures, are tested to
-determine whether they are fit for use. Unit testing finds problems early
-in the development cycle.
-
-More information about PlatformIO Unit Testing:
-- https://docs.platformio.org/en/latest/advanced/unit-testing/index.html
+2.1. Explain what each instruction byte and each register bit represent and do
+2.2. Document why the timing numbers were used
+2.3. Comment out why youre testing what youre testing
