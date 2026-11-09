@@ -42,13 +42,18 @@ void setup() {
   pinMode(MOD1_CE, OUTPUT);
   pinMode(MOD2_CSN, OUTPUT);
   pinMode(MOD2_CE, OUTPUT);
-
+  pinMode(HEARTBEAT_PIN, OUTPUT);
   //Driving CSN high during startup/setup prevents the modules from picking up random startup noise on the SPI bus as valid commands
   //Driving CE low during startup/setup puts the modules into standby mode, preventing them from transmitting or receiving any data until the test begins
   digitalWrite(MOD1_CSN, HIGH);
   digitalWrite(MOD1_CE, LOW);
   digitalWrite(MOD2_CSN, HIGH);
   digitalWrite(MOD2_CE, LOW);
+
+  // Set timer overflow to 2 Hz (triggers an interrupt every 500ms)
+    heartbeatTimer->setOverflow(2, HERTZ_FORMAT); 
+    heartbeatTimer->attachInterrupt(heartbeatISR);
+    heartbeatTimer->resume(); // Start the hardware timer
 
   //Mandatory functioncall to initialize the SPI bus and set the default parameters for the SPI peripheral on the blackpill
   SPI.begin();
@@ -64,12 +69,13 @@ void loop() {
   uint32_t failedSpeed = 0; // if the current speed fails the threshold test, it gets saved under this variable
 int overclockAttempt = 0; //to print out the current overclock attempt, this variable saves the current overclock attempt incrementally with each loop
 
+
 //------------Start of the main loop--------------//
 //This main for loop runs through for each tested speed specified in the SPI_SPEED_STEPS array, starting from 1 MHz up to the highest overclock attempt of 20 MHz for a total of 7 iterations
   for (size_t step = 0; step < NUM_SPEED_STEPS; step++) {
     uint32_t currentSpeed = SPI_SPEED_STEPS[step]; //Saves the currently tested frequency speed from the SPI_SPEED_STEPS array into a variable
     uint32_t speedMHz = currentSpeed / 1000000; //Puts the tested frequency in a readable MHz format
-
+    
     //Serial.printf("Testing SPI @ %2lu MHz... ", speedMHz);
 
 if (currentSpeed > 10000000) { //if current speed is above the (theoritical) maximum speed of the nRF24 module, run this if statement
@@ -140,9 +146,11 @@ if (currentSpeed > 10000000) { //if current speed is above the (theoritical) max
         writeReg(MOD2_CSN, NRF_REG_STATUS, NRF_STATUS_RX_DR); //clearing the flag */
         readReceivedPacket(i); //calls the function to read the received packet and print it out
         rxSuccessCount++; //counts up for each succesful reception
+      } 
+      
       }
-    }
-
+      
+     
     //subtracts the initial millis starttime watch against the current millis value, ending the stopwatch procedure
     //assigned value now shows the  time in milliseconds it took for the packages to transmit, receive, and be verified 
     unsigned long duration = millis() - startTime; 
@@ -150,33 +158,39 @@ if (currentSpeed > 10000000) { //if current speed is above the (theoritical) max
 
     //Serial.printf("Done (%lu ms) | RX Success: %3lu/%lu (%.1f%%%%) | SPI Faults: %lu ", 
               //duration, rxSuccessCount, PACKETS_PER_BATCH, passRate, spiFaultCount);
-    Serial.printf("Done (%lu ms) | RX Success: %3lu/%lu (%.1f%%) | SPI Faults: %lu ", 
-                  duration, rxSuccessCount, PACKETS_PER_BATCH, passRate, spiFaultCount);
+    //Serial.printf("Done (%lu ms) | RX Success: %3lu/%lu (%.1f%%) | SPI Faults: %lu \r\n", 
+                  //duration, rxSuccessCount, PACKETS_PER_BATCH, passRate, spiFaultCount);
     
+Serial.printf("Done (%lu ms) | RX Success: %3lu/%lu (%lu%%) | SPI Faults: %lu\r\n", 
+              duration, rxSuccessCount, PACKETS_PER_BATCH, rxSuccessCount, spiFaultCount);
+
 
     //if the calculated passrate is above the minimum success rate and the spi fault count is equal to 0, save the currently tested speed as the (current) maximum stable one
     if (passRate >= MIN_SUCCESS_RATE && spiFaultCount == 0) { 
       maxStableSpeed = currentSpeed; 
-      Serial.println("[PASS]");
+      Serial.println("\r\n[PASS]");
     } else {
       failedSpeed = currentSpeed; //capture the current incrementally failed speed
-      Serial.println("[FAIL]");
+      Serial.println("\r\n[FAIL]");
       break;
     }
   }
 
   Serial.println("\n==============================================");
   if (maxStableSpeed > 0) {
-
+   
   //if (failedSpeed == 0) {
     //Im unhappy with how these strings are formulated, need a better idea here
     Serial.printf(" RESULT: Max Stable SPI Clock = %lu MHz\n", maxStableSpeed / 1000000);
+    triggerSuccessBlink();
   } else { //This isnt good, implement a function if needed
     //Serial.println(" RESULT: Failed to pass threshold at minimum speed (1 MHz).");
-    Serial.println(" RESULT: Failed transmission because of minimum succesrate not being reached or a critical spi fault.\n");
+    Serial.println(" RESULT: Failed transmission because of minimum succesrate not being reached or a critical spi fault.\r\n");
     Serial.printf("Max stable speed before failure = %lu MHz", failedSpeed / 1000000);
+    triggerFailurePause();
   }
-  Serial.println("==============================================\n");
-
+  Serial.println("==============================================\r\n");
+  
   delay(10000);
+  
 }
