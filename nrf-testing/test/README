@@ -3,9 +3,9 @@ To Dos:
 2. Comment everything out for both the main and header file 
 3. Make use of the nrf transceivers capability of sending 3 packets back to back instead of only sending out one package at a time (FIFO)
 4. Verify the package integrity by printing out the received data against the sent out data
-5. Check in more detail for spi corruption faults (silent bit flips)
-6. register 0x08 has a prebuilt hardware counter for lost packets and retransmissions, use it
-7. change the overclock speed printouts from the overclocked speeds to "Overclock speed attempt 1 (X MHz), Overclock speed attempt 2 (X Mhz) etc. , the way its printed out right now isnt fully correct
+5. Check in more detail for spi corruption faults (silent bit flips) (not a priority right now)
+6. Build logic for the irq pin (not a priority right now)
+7. change the overclock speed printouts from the overclocked speeds to "Overclock speed attempt 1 (X MHz), Overclock speed attempt 2 (X Mhz) etc. , the way its printed out right now isnt fully correct DONE
 8. Add a status LED function showing wether a package batch was sent and received succesfully or not, etc.
 
 2.1. Explain what each instruction byte and each register bit represent and do

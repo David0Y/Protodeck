@@ -2,7 +2,7 @@
 #include <SPI.h>
 
 #include "nrf24driver.h"
-
+#include "registercmds.h"
 
 // --- Module Pin Mapping ---
 #define MOD1_CSN PB0
@@ -65,7 +65,7 @@ void loop() {
 int overclockAttempt = 0; //to print out the current overclock attempt, this variable saves the current overclock attempt incrementally with each loop
 
 //------------Start of the main loop--------------//
-//This for loop runs through for each tested speed specified in the SPI_SPEED_STEPS array, starting from 1 MHz up to the highest overclock attempt of 20 MHz for a total of 7 iterations
+//This main for loop runs through for each tested speed specified in the SPI_SPEED_STEPS array, starting from 1 MHz up to the highest overclock attempt of 20 MHz for a total of 7 iterations
   for (size_t step = 0; step < NUM_SPEED_STEPS; step++) {
     uint32_t currentSpeed = SPI_SPEED_STEPS[step]; //Saves the currently tested frequency speed from the SPI_SPEED_STEPS array into a variable
     uint32_t speedMHz = currentSpeed / 1000000; //Puts the tested frequency in a readable MHz format
@@ -75,10 +75,10 @@ int overclockAttempt = 0; //to print out the current overclock attempt, this var
 if (currentSpeed > 10000000) { //if current speed is above the (theoritical) maximum speed of the nRF24 module, run this if statement
     overclockAttempt++; //Overclock attempt counter increments for each speed above 10 MHz up to the highest overclock attempt 3 (20 MHz)
     
-    Serial.printf("Overclock attempt %d: %2lu MHz... ", overclockAttempt, speedMHz);
+    Serial.printf("Overclock attempt %d: %2lu MHz...\r\n", overclockAttempt, speedMHz);
   } else {
     overclockAttempt = 0; // Reset overclock attempt counter for standard speeds
-    Serial.printf("Testing SPI @ %2lu MHz...", speedMHz);
+    Serial.printf("Testing SPI @ %2lu MHz...\r\n", speedMHz);
   }
 
     //initialize the hardware configuration for both nRF24 modules at the currently tested speed
@@ -129,7 +129,7 @@ if (currentSpeed > 10000000) { //if current speed is above the (theoritical) max
       //Isolates the RX_DR (Data Ready) flag-bit 
        //} else if (m2_stat & (1 << 6)) {
     } else if (m2_stat & NRF_STATUS_RX_DR) {
-        digitalWrite(MOD2_CSN, LOW); //If RX_DR is high (1), initiate the following Radio readout sequence
+        /*digitalWrite(MOD2_CSN, LOW); //If RX_DR is high (1), initiate the following Radio readout sequence
 
         //SPI.transfer(0x61); 
         SPI.transfer(NRF_CMD_R_RX_PAYLOAD); //Reads the packet sitting at the front of Radio 2's (RX) Receive FIFO buffer
@@ -137,7 +137,8 @@ if (currentSpeed > 10000000) { //if current speed is above the (theoritical) max
         for (int k = 0; k < 4; k++) SPI.transfer(0xFF); 
         digitalWrite(MOD2_CSN, HIGH); //ends the transaction
         //writeReg(MOD2_CSN, 0x07, (1 << 6));
-        writeReg(MOD2_CSN, NRF_REG_STATUS, NRF_STATUS_RX_DR); //clearing the flag
+        writeReg(MOD2_CSN, NRF_REG_STATUS, NRF_STATUS_RX_DR); //clearing the flag */
+        readReceivedPacket(i); //calls the function to read the received packet and print it out
         rxSuccessCount++; //counts up for each succesful reception
       }
     }
@@ -170,8 +171,10 @@ if (currentSpeed > 10000000) { //if current speed is above the (theoritical) max
   //if (failedSpeed == 0) {
     //Im unhappy with how these strings are formulated, need a better idea here
     Serial.printf(" RESULT: Max Stable SPI Clock = %lu MHz\n", maxStableSpeed / 1000000);
-  } else {
-    Serial.println(" RESULT: Failed to pass threshold at minimum speed (1 MHz).");
+  } else { //This isnt good, implement a function if needed
+    //Serial.println(" RESULT: Failed to pass threshold at minimum speed (1 MHz).");
+    Serial.println(" RESULT: Failed transmission because of minimum succesrate not being reached or a critical spi fault.\n");
+    Serial.printf("Max stable speed before failure = %lu MHz", failedSpeed / 1000000);
   }
   Serial.println("==============================================\n");
 
