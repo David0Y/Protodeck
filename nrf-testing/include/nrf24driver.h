@@ -7,9 +7,12 @@
 // nRF24L01+ REGISTER MAP & COMMAND DEFINITIONS
 // ==========================================
 
+
+// --- Module Pin Mapping ---
 #define MOD1_CSN PB0
 #define MOD2_CSN PA4
 #define MOD2_CE  PA3
+#define MOD1_CE  PB10
 
 // SPI Command Masks & Directives
 #define NRF_CMD_W_REG_MASK      0x20  // Write command mask (OR'd with register address to write)
@@ -132,50 +135,3 @@ static inline void initModulesAtSpeed(uint32_t spiHz) {
   // Keep Radio 2's CE pin HIGH continuously to maintain RX listening mode
   digitalWrite(MOD2_CE, HIGH);
 }
-/*static inline void initModulesAtSpeed(uint32_t spiHz) {
-  SPI.endTransaction(); //Restarts the SPI transaction
-  SPI.beginTransaction(SPISettings(spiHz, MSBFIRST, SPI_MODE0)); //Configures the spi bus hardware parameters by setting the master clock frequency, specifying the bit order (MSB first), and selecting the SPI mode (mode 0)
-
-  // Reset/Power down registers initially
-  writeReg(MOD1_CSN, NRF_REG_CONFIG, 0x00);
-  writeReg(MOD2_CSN, NRF_REG_CONFIG, 0x00);
-  delay(10);
-
-  // Configure Radio 1 (TX Setup)
-  writeReg(MOD1_CSN, NRF_REG_EN_AA, NRF_EN_AA_NONE); //Writes 0x00 to Radio 1's EN_AA (Auto-Acknowledgment) register
-  writeReg(MOD1_CSN, NRF_REG_EN_RXADDR, NRF_EN_RXADDR_P0); //Writes 0x01 to Radio 1's EN_RXADDR register, enabling Data Pipe 0
-  writeReg(MOD1_CSN, NRF_REG_RF_CH, NRF_RF_CH_DEFAULT); //Writes channel value 10 (2410 MHz) to Radio 1's RF_CH register, tuning its physical radio frequency synthesizer to channel 10
-  writeReg(MOD1_CSN, NRF_REG_RF_SETUP, NRF_RF_SETUP_1MBPS); //Writes 0x06 to Radio 1's RF_SETUP register, configuring its internal modulator for a 1 Mbps air data rate and maximum 0 dBm output power
-
-  // Configure Radio 2 (RX Setup)
-  writeReg(MOD2_CSN, NRF_REG_EN_AA, NRF_EN_AA_NONE); 
-  writeReg(MOD2_CSN, NRF_REG_EN_RXADDR, NRF_EN_RXADDR_P0); // Use Pipe 0 to match TX
-  writeReg(MOD2_CSN, NRF_REG_RF_CH, NRF_RF_CH_DEFAULT); 
-  writeReg(MOD2_CSN, NRF_REG_RF_SETUP, NRF_RF_SETUP_1MBPS); 
-  writeReg(MOD2_CSN, NRF_REG_RX_PW_P0, NRF_PAYLOAD_LEN_4); // Configure Pipe 0 payload width
-
-  writeReg(MOD2_CSN, NRF_REG_EN_AA, NRF_EN_AA_NONE); //Writes 0x00 to Radio 2's EN_AA (Auto-Acknowledgment) register
-  writeReg(MOD2_CSN, NRF_REG_EN_RXADDR, NRF_EN_RXADDR_P1); //Writes 0x02 to Radio 2's EN_RXADDR register, enabling Data Pipe 1
-  writeReg(MOD2_CSN, NRF_REG_RF_CH, NRF_RF_CH_DEFAULT); //Writes channel value 10 (2410 MHz) to Radio 2's RF_CH register, tuning its physical radio frequency synthesizer to the same channel as Radio 1
-  writeReg(MOD2_CSN, NRF_REG_RF_SETUP, NRF_RF_SETUP_1MBPS); //Writes 0x06 to Radio 2's RF_SETUP register, matching Radio 1's 1 Mbps air data rate and 0 dBm settings
-  writeReg(MOD2_CSN, NRF_REG_RX_PW_P1, NRF_PAYLOAD_LEN_4); //Writes 4 to Radio 2's RX_PW_P1 register, locking Data Pipe 1 to expect a static, fixed payload width of exactly 4 bytes per incoming packet
-   
-  // Flush FIFOs to clear any stale data
-  digitalWrite(MOD1_CSN, LOW); SPI.transfer(NRF_CMD_FLUSH_TX); digitalWrite(MOD1_CSN, HIGH);
-  digitalWrite(MOD2_CSN, LOW); SPI.transfer(NRF_CMD_FLUSH_RX); digitalWrite(MOD2_CSN, HIGH);
-
-  // Clear status interrupt flags
-  writeReg(MOD1_CSN, NRF_REG_STATUS, NRF_STATUS_CLEAR_ALL);
-  writeReg(MOD2_CSN, NRF_REG_STATUS, NRF_STATUS_CLEAR_ALL);
-
-  // Set pipe addresses
-  /*setAddress(MOD1_CSN, NRF_REG_TX_ADDR, NRF_ADDR_BYTE_DEFAULT);
-  setAddress(MOD2_CSN, NRF_REG_RX_ADDR_P1, NRF_ADDR_BYTE_DEFAULT);
-  setAddress(MOD1_CSN, NRF_REG_TX_ADDR, NRF_ADDR_BYTE_DEFAULT);
-  setAddress(MOD2_CSN, NRF_REG_RX_ADDR_P0, NRF_ADDR_BYTE_DEFAULT); // Target Pipe 0 address register (0x0A)
-
-  // Power up modules: Radio 1 in TX mode, Radio 2 in RX mode
-  writeReg(MOD1_CSN, NRF_REG_CONFIG, NRF_CONFIG_PWR_UP);                                    // PRIM_RX = 0 (TX)
-  writeReg(MOD2_CSN, NRF_REG_CONFIG, NRF_CONFIG_PWR_UP | NRF_CONFIG_PRIM_RX);               // PRIM_RX = 1 (RX)
-  delay(5);
-} */
