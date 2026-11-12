@@ -20,6 +20,8 @@ const uint32_t SPI_SPEED_STEPS[] = {
   20000000   // Overclock Step 3 (20 MHz attempt)
 };
 
+// 10 MHz for single speed test, change the value to whichever you wanna test as a single speed
+const uint32_t SPI_SINGLE_SPEED[] = { 10000000 }; // saved as array to be compatible with the function
 // Calculate the number of elements in the SPI_SPEED_STEPS array
 const size_t NUM_SPEED_STEPS = sizeof(SPI_SPEED_STEPS) / sizeof(SPI_SPEED_STEPS[0]);
 
@@ -59,27 +61,60 @@ void setup() {
 
 void loop() {
  
-//These two variables get declared at the start of each loop iteration to ensure they are reset for each new test cycle
+//These three variables get declared at the start of each loop iteration to ensure they are reset for each new test cycle
   uint32_t maxStableSpeed = 0; //saves the current stable speed as the maximum stable one, incrementally updated for each loop
   uint32_t failedSpeed = 0; // if the current speed fails the threshold test, it gets saved under this variable
+  int testOutcome = 0; //switch-case determination variable used in runSpiFrequencySweep
 
+  //IMPORTANT: Only use one of the two functions below and comment out the other one that isnt used
 
-  runSpiFrequencySweep(SPI_SPEED_STEPS, maxStableSpeed, failedSpeed, NUM_SPEED_STEPS, PACKETS_PER_BATCH, MIN_SUCCESS_RATE);
+  //use this function for testing several speeds one after another
+  //runSpiFrequencySweep(SPI_SPEED_STEPS, maxStableSpeed, failedSpeed, NUM_SPEED_STEPS, PACKETS_PER_BATCH, MIN_SUCCESS_RATE, testOutcome);
+  //use this function for testing a single speed
+  runSpiFrequencySweep(SPI_SINGLE_SPEED, maxStableSpeed, failedSpeed, 1, PACKETS_PER_BATCH, MIN_SUCCESS_RATE, testOutcome);
 
-Serial.println("\n==============================================");
-  if (maxStableSpeed > 0) {
+  Serial.println("\r\n==============================================\r\n");
+  
+  switch (testOutcome) {
+        case 4: // Multiple speeds tested successfully (full sweep pass)
+            Serial.printf("RESULT: Max Stable SPI Clock = %lu MHz\n", maxStableSpeed / 1000000);
+            triggerSuccessBlink();
+            break;
+
+        case 1: // Single speed tested successfully
+            Serial.printf("RESULT: Successful Single-Speed Test at %lu MHz\n", maxStableSpeed / 1000000);
+            triggerSuccessBlink();
+            break;
+
+        case 2: // Multiple speeds tested, failed partway through
+            Serial.println("RESULT: Failed transmission because minimum success rate was not reached or due to a critical SPI fault.\r\n");
+            Serial.printf("Max stable speed before failure = %lu MHz\r\n", failedSpeed / 1000000);
+            triggerFailurePause();
+            break;
+
+        case 3: // Single speed tested and failed
+            Serial.println("RESULT: Single-speed test failed. Minimum success rate not reached or critical SPI fault.\r\n");
+            Serial.printf("Failed speed = %lu MHz\r\n", failedSpeed / 1000000);
+            triggerFailurePause();
+            break;
+            
+        default:
+            break;
+    }
+  
+  
+  /*if (maxStableSpeed > 0) {
    
-  //if (failedSpeed == 0) {
-    //Im unhappy with how these strings are formulated, need a better idea here
-    Serial.printf(" RESULT: Max Stable SPI Clock = %lu MHz\n", maxStableSpeed / 1000000);
+    //Serial.printf(" RESULT: Max Stable SPI Clock = %lu MHz\n", maxStableSpeed / 1000000);
+    Serial.printf(" RESULT: Succesful test run at %lu MHz\n", maxStableSpeed / 1000000);
     triggerSuccessBlink();
   } else { //This isnt good, implement a function if needed
     //Serial.println(" RESULT: Failed to pass threshold at minimum speed (1 MHz).");
     Serial.println(" RESULT: Failed transmission because of minimum succesrate not being reached or a critical spi fault.\r\n");
     Serial.printf("Max stable speed before failure = %lu MHz", failedSpeed / 1000000);
     triggerFailurePause();
-  }
-  Serial.println("==============================================\r\n");
+  }*/
+  Serial.println("\r\n==============================================\r\n");
   
   delay(10000);
 

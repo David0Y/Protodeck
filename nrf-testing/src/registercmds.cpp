@@ -2,10 +2,8 @@
 
 
 
-void runSpiFrequencySweep(const uint32_t *speeds,uint32_t &maxStableSpeed, uint32_t &failedSpeed, uint32_t NUM_SPEED_STEPS,  uint32_t PACKETS_PER_BATCH, uint32_t MIN_SUCCESS_RATE) {
+void runSpiFrequencySweep(const uint32_t *speeds,uint32_t &maxStableSpeed, uint32_t &failedSpeed, uint32_t NUM_SPEED_STEPS,  uint32_t PACKETS_PER_BATCH, uint32_t MIN_SUCCESS_RATE, int &testOutcome) {
     
-
-
     for (size_t step = 0; step < NUM_SPEED_STEPS; step++) {
         uint32_t currentSpeed = speeds[step];
         uint32_t speedMHz = currentSpeed / 1000000;
@@ -28,7 +26,7 @@ void runSpiFrequencySweep(const uint32_t *speeds,uint32_t &maxStableSpeed, uint3
         unsigned long duration = millis() - startTime;
         float passRate = ((float)rxSuccessCount / PACKETS_PER_BATCH) * 100.0;
 
-        Serial.printf("Done (%lu ms) | RX Success: %3lu/%lu (%.1f%%) | SPI Faults: %lu\r\n ", 
+        Serial.printf("Done (%lu ms) | RX Success: %3lu/%lu (%.1f%%) | SPI Faults: %lu\r\n", 
                       duration, rxSuccessCount, PACKETS_PER_BATCH, passRate, spiFaultCount);
 
         if (passRate >= MIN_SUCCESS_RATE && spiFaultCount == 0) {
@@ -40,16 +38,28 @@ void runSpiFrequencySweep(const uint32_t *speeds,uint32_t &maxStableSpeed, uint3
             break;
         }
     }
+    testOutcome = 0; //switch-case determination variable
+
+    if (NUM_SPEED_STEPS == 1) {
+        testOutcome = (failedSpeed == 0) ? 1 : 3; // 1 = Single Pass, 3 = Single Fail
+    } else {
+        testOutcome = (failedSpeed == 0) ? 4 : 2; // 4 = Multi Pass, 2 = Multi Fail
+    }
+
+      
+
+
+
 }
 
 void handleOverclockLogging(uint32_t currentSpeed, uint32_t speedMHz) {
-    int overclockAttempt = 0; //to print out the current overclock attempt, this variable saves the current overclock attempt incrementally with each loop
+    static int overclockAttempt = 0; //to print out the current overclock attempt, this variable saves the current overclock attempt incrementally with each loop
     if (currentSpeed > 10000000) {
         overclockAttempt++;
-        Serial.printf("Overclock attempt %d: %2lu MHz... ", overclockAttempt, speedMHz);
+        Serial.printf("Overclock attempt %d: %2lu MHz...\r\n ", overclockAttempt, speedMHz);
     } else {
         overclockAttempt = 0;
-        Serial.printf("Testing SPI @ %2lu MHz...", speedMHz);
+        Serial.printf("Testing SPI @ %2lu MHz...\r\n", speedMHz);
     }
 }
 
@@ -58,10 +68,11 @@ void sendTestPacket(uint32_t i) {
     
     digitalWrite(MOD1_CSN, LOW);
     SPI.transfer(NRF_CMD_W_TX_PAYLOAD);
-    SPI.transfer('S');
     SPI.transfer('P');
+    SPI.transfer('T');
     SPI.transfer('D');
-    SPI.transfer((uint8_t)('0' + (i % 10)));
+    //SPI.transfer((uint8_t)('0' + (i % 10)));
+    SPI.transfer((uint8_t)((i & 0xFF)));
     digitalWrite(MOD1_CSN, HIGH);
 
     digitalWrite(MOD1_CE, HIGH);
@@ -112,6 +123,6 @@ void readReceivedPacket(uint32_t packetIndex) {
     writeReg(MOD2_CSN, NRF_REG_STATUS, NRF_STATUS_RX_DR);
 
     // 6. Print out the captured packet bytes cleanly via Serial
-    Serial.printf("RX Packet #%lu -> Payload: %c%c%c%c (Hex: %02X %02X %02X %02X)\r\n", 
+    Serial.printf("RX Packet #%lu -> Payload: %c%c%c0x%02X (Hex: %02X %02X %02X %02X)\r\n", 
                   packetIndex, b0, b1, b2, b3, b0, b1, b2, b3);
 }
