@@ -1,4 +1,4 @@
-#include "registercmds.h"
+#include "spi_sweep_runner.h"
 
 
 
@@ -17,7 +17,7 @@ void runSpiFrequencySweep(const uint32_t *speeds,uint32_t &maxStableSpeed, uint3
 
         unsigned long startTime = millis();
 
-        // Inner batch loop is now clean and concise
+        
         for (uint32_t i = 1; i <= PACKETS_PER_BATCH; i++) {
             sendTestPacket(i);
             pollTransceiverStatuses(txSuccessCount, rxSuccessCount, spiFaultCount, i);
@@ -31,7 +31,7 @@ void runSpiFrequencySweep(const uint32_t *speeds,uint32_t &maxStableSpeed, uint3
 
         if (passRate >= MIN_SUCCESS_RATE && spiFaultCount == 0) {
             maxStableSpeed = currentSpeed;
-            Serial.println("\r\n[PASS]");
+            //Serial.println("\r\n[PASS]");
         } else {
             failedSpeed = currentSpeed;
             Serial.println("\r\n[FAIL]");

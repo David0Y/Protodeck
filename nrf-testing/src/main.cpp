@@ -2,7 +2,7 @@
 #include <SPI.h>
 
 #include "nrf24driver.h"
-#include "registercmds.h"
+#include "spi_sweep_runner.h"
 #include "stm32f4heartbeat.h"
 
 // --- Test Configuration ---
@@ -77,7 +77,8 @@ void loop() {
   
   switch (testOutcome) {
         case 4: // Multiple speeds tested successfully (full sweep pass)
-            Serial.printf("RESULT: Max Stable SPI Clock = %lu MHz\n", maxStableSpeed / 1000000);
+            //Serial.printf("RESULT: Max Stable SPI Clock = %lu MHz\n", maxStableSpeed / 1000000);
+            Serial.printf("RESULT: Max Stable Tested Frequency = %lu MHz\n", maxStableSpeed / 1000000);
             triggerSuccessBlink();
             break;
 
