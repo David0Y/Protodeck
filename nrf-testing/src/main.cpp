@@ -25,7 +25,7 @@ const uint32_t SPI_SINGLE_SPEED[] = { 10000000 }; // saved as array to be compat
 // Calculate the number of elements in the SPI_SPEED_STEPS array
 const size_t NUM_SPEED_STEPS = sizeof(SPI_SPEED_STEPS) / sizeof(SPI_SPEED_STEPS[0]);
 
-
+ uint32_t txPayload[4] = {'P', 'T', 'D', 0x00};
 
 void setup() {
   Serial.begin(115200);
@@ -66,12 +66,14 @@ void loop() {
   uint32_t failedSpeed = 0; // if the current speed fails the threshold test, it gets saved under this variable
   int testOutcome = 0; //switch-case determination variable used in runSpiFrequencySweep
 
+
+ 
   //IMPORTANT: Only use one of the two functions below and comment out the other one that isnt used
 
   //use this function for testing several speeds one after another
-  //runSpiFrequencySweep(SPI_SPEED_STEPS, maxStableSpeed, failedSpeed, NUM_SPEED_STEPS, PACKETS_PER_BATCH, MIN_SUCCESS_RATE, testOutcome);
+  //runSpiFrequencySweep(SPI_SPEED_STEPS, maxStableSpeed, failedSpeed, NUM_SPEED_STEPS, PACKETS_PER_BATCH, MIN_SUCCESS_RATE, testOutcome, txPayload);
   //use this function for testing a single speed
-  runSpiFrequencySweep(SPI_SINGLE_SPEED, maxStableSpeed, failedSpeed, 1, PACKETS_PER_BATCH, MIN_SUCCESS_RATE, testOutcome);
+  runSpiFrequencySweep(SPI_SINGLE_SPEED, maxStableSpeed, failedSpeed, 1, PACKETS_PER_BATCH, MIN_SUCCESS_RATE, testOutcome, txPayload);
 
   Serial.println("\r\n==============================================\r\n");
   
