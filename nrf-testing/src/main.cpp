@@ -68,11 +68,12 @@ void loop() {
 
 
  
-  //IMPORTANT: Only use one of the two functions below and comment out the other one that isnt used
+  //---------------------------------------------------------- 
+  // Only use one of the two functions below and comment out the other one that isnt used
 
-  //use this function for testing several speeds one after another
+  //------Use this function for testing several speeds one after another--------
   //runSpiFrequencySweep(SPI_SPEED_STEPS, maxStableSpeed, failedSpeed, NUM_SPEED_STEPS, PACKETS_PER_BATCH, MIN_SUCCESS_RATE, testOutcome, txPayload);
-  //use this function for testing a single speed
+  //------Use this function for testing a single speed--------------
   runSpiFrequencySweep(SPI_SINGLE_SPEED, maxStableSpeed, failedSpeed, 1, PACKETS_PER_BATCH, MIN_SUCCESS_RATE, testOutcome, txPayload);
 
   Serial.println("\r\n==============================================\r\n");
@@ -105,18 +106,6 @@ void loop() {
             break;
     }
   
-  
-  /*if (maxStableSpeed > 0) {
-   
-    //Serial.printf(" RESULT: Max Stable SPI Clock = %lu MHz\n", maxStableSpeed / 1000000);
-    Serial.printf(" RESULT: Succesful test run at %lu MHz\n", maxStableSpeed / 1000000);
-    triggerSuccessBlink();
-  } else { //This isnt good, implement a function if needed
-    //Serial.println(" RESULT: Failed to pass threshold at minimum speed (1 MHz).");
-    Serial.println(" RESULT: Failed transmission because of minimum succesrate not being reached or a critical spi fault.\r\n");
-    Serial.printf("Max stable speed before failure = %lu MHz", failedSpeed / 1000000);
-    triggerFailurePause();
-  }*/
   Serial.println("\r\n==============================================\r\n");
   
   delay(10000);

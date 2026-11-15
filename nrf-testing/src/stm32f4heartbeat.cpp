@@ -43,7 +43,7 @@ void heartbeatISR() {
 }
 
 void triggerSuccessBlink() {
-    // Pause timer momentarily to reconfigure frequency for snappy blinks
+    // Pause timer momentarily to reconfigure frequency for blinks
     heartbeatTimer->pause();
     
     isSuccessBlinking = true;
@@ -52,7 +52,7 @@ void triggerSuccessBlink() {
     // Set timer frequency to 12 Hz (~83ms per interrupt tick)
     heartbeatTimer->setOverflow(12, HERTZ_FORMAT); 
     
-    // Fire the first ON state immediately
+    // Fire the first on state immediately
     digitalWrite(HEARTBEAT_PIN, HIGH);
     successStep = 1;
     

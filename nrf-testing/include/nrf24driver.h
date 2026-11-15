@@ -20,8 +20,8 @@
 #define NRF_REG_MASK            0x1F  // Bitmask for extracting lower 5 bits of a register address
 #define NRF_CMD_FLUSH_TX        0xE1  // Command to clear/flush the TX FIFO buffer
 #define NRF_CMD_FLUSH_RX        0xE2  // Command to clear/flush the RX FIFO buffer
-#define NRF_CMD_W_TX_PAYLOAD    0xA0
-#define NRF_CMD_R_RX_PAYLOAD    0x61
+#define NRF_CMD_W_TX_PAYLOAD    0xA0  // Write TX payload command (latches data into transmit FIFO for air transmission)
+#define NRF_CMD_R_RX_PAYLOAD    0x61  // Read RX payload command (clocks incoming packet data out of receive FIFO)
 
 
 
@@ -48,8 +48,8 @@
 #define NRF_EN_RXADDR_P0        (1 << 0)  // Enable data pipe 0
 #define NRF_EN_RXADDR_P1        (1 << 1)  // Enable data pipe 1
 
-#define NRF_STATUS_TX_DS        (1 << 5)
-#define NRF_STATUS_RX_DR        (1 << 6)
+#define NRF_STATUS_TX_DS        (1 << 5)  // Data Sent Interrupt (latched high when packet transmission completes)
+#define NRF_STATUS_RX_DR        (1 << 6)  // Data Ready Interrupt (latched high when new payload arrives in RX FIFO)
 
 #define NRF_RF_CH_DEFAULT       10        // Default operating channel (2410 MHz)
 #define NRF_RF_SETUP_1MBPS      0x06      // RF Setup value: 1 Mbps air data rate, 0 dBm output power
