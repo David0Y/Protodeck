@@ -30,14 +30,17 @@ pio run -t upload
 #  Bench Verification Criteria
 * **Oscilloscope check:** Measure each pin against GND (GND I or GND II). Non-pulled pins should stay at or below ~700–800 mV peak (higher amplitudes on non-pulled pins can cross logic-low thresholds and require rework), while pulled pins (excluding 3V3 and GND) target 3.3 V with ~500 ns timing (exponential/RC-like shapes are expected).
 
-![Oscilloscope check_nonpulled](./docs/Bitbanging_Oscilloscope_unpilled_pin.png)
-Showcase image of what a nonpulled pin should look like on the oscilloscope during crisscross tests
-![Oscilloscope check_Pulled](./docs/Bitbanging_Oscilloscope_Pulled_pin.png)
+![Oscilloscope check_nonpulled](./docs/Bitbanging_Oscilloscope_unpulled_pin.png)  
+
+Showcase image of what a nonpulled pin should look like on the oscilloscope during crisscross tests  
+
+![Oscilloscope check_Pulled](./docs/Bitbanging_Oscilloscope_Pulled_Pin.png)  
+
 Showcase image of what a pulled pin should look like on the oscilloscope during crisscross tests and full output tests
 
 * **Logic analyzer check (PulseView / fx2lafw):** Capture at 1M samples and 24 MHz (run Header I and Header II separately if an 8-channel analyzer is used). Measured rise-to-fall widths around 400–1000 ns are acceptable due to analyzer/software jitter, whereas values below 300 ns or above 1500 ns indicate hardware faults to fix before moving on.
 
-![Oscilloscope check_Pulled](./docs/Bitbanging_Logic_Analyzer_capture.png)
+![Logic_Analyzer_Check](./docs/Bitbanging_Logic_Analyzer_capture.png)
 Showcase image of a logic analyzer capture during a full output test
 
 > *For a more visually detailed explanation/manual, see the **Hardware Bringup Manual** under the main branchs docs/documentation folder.*
