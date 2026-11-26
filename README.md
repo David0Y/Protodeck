@@ -4,6 +4,9 @@ A self-contained, hand-soldered `2.4 GHz` wireless transceiver test rig and SPI 
 
 Protodeck is designed to validate shared-bus SPI signal integrity, transceiver command reliability, and `2.4 GHz` packet loopback performance across stepped SPI clock frequencies—without relying on custom PCB fabrication, solderless breadboards, or hard-soldered components.
 
+![Protodeck showcase](./docs/photos/Protodeck_photograph.png)
+![Protodeck firmware demo](./docs/photos/Protodeck_demo.gif)
+
 ---
 
 ## Key Features
