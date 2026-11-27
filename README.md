@@ -1,3 +1,24 @@
-A collection of stl.-files that were generated iteratively during the development of the protodeck casing  
-A final assembly of stl.- files and an .mf-file will be pushed on the branch once finished under the names "protocase.stl protocase_wall.stl protocase_ceiling.stl" and "protocase.mf"  
-The development process will be summarized under the hardware verification document that also includes the circuit board development process
+# Protodeck (3d-prints branch)
+
+Archive of the .stl and .3mf 3D-printable enclosure models created during the iterative mechanical design process of the Protodeck casing, culminating in the final modular housing for the 40 × 60 mm perfboard, STM32F411CE BlackPill, and dual nRF24L01+PA+LNA transceivers.
+
+# Purpose & Scope
+
+**Iterative Design History:** 
+Preserves intermediate enclosure prototypes and tolerance test revisions produced while refining the perfboard slide-in slot, transceiver cutouts, and modular ceiling/wall fitment. 
+
+**Final Printable Release:** 
+Provides the final multi-part casing files ready for FDM 3D printing (protocase_final, protocase_ceiling, and protocase_wall, along with final.3mf).
+
+**Final Enclosure Parts**:
+To print the finished enclosure, use either the individual .stl files or the pre-configured .3mf project file (adjusted to your specific printer and filament):
+
+**protocase_final.stl:** Main enclosure body housing the 40 × 60 mm perfboard slot, BlackPill USB-C/debugger openings, and dual transceiver pockets.
+
+**protocase_ceiling.stl:** Top cover with cutouts for the exposed 4-pin ST-Link debugger header.
+
+**protocase_wall.stl:** Locking end wall that secures the perfboard inside the slot and prevents board movement when plugging in the USB-C cable.
+
+**final.3mf:** Combined slicer project reference file.  
+
+For more details look into the **hardware bringup document** and into the **casing design log document** under the main branch.
